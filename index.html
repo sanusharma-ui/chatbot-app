@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AI by sanu sharma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial;
+        background: #0f172a;
+        color: #e6eef8;
+        margin: 0;
+        height: 100vh;
+        display: flex;
+      }
+      .app {
+        width: 100%;
+        max-width: 800px;
+        margin: auto;
+        display: flex;
+        flex-direction: column;
+        height: 95vh;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #0b1220;
+        box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
+        transition: background 0.5s ease;
+      }
+      header {
+        padding: 12px 16px;
+        background: #071027;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        transition: background 0.5s ease;
+      }
+      header h1 {
+        margin: 0;
+        font-weight: 600;
+        font-size: 1.05rem;
+        color: #9be7ff;
+      }
+      #chat {
+        flex: 1;
+        overflow: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: linear-gradient(180deg, #071029 0%, #061522 100%);
+        transition: background 0.5s ease;
+      }
+      .msg {
+        max-width: 85%;
+        padding: 10px 14px;
+        border-radius: 12px;
+        word-break: break-word;
+        box-shadow: 0 6px 18px rgba(2, 6, 23, 0.6);
+        opacity: 0;
+        transform: translateY(20px);
+        animation: fadeInUp 0.5s ease forwards;
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .user {
+        align-self: flex-end;
+        background: linear-gradient(90deg, #0369a1, #0891b2);
+        color: white;
+      }
+      .ai {
+        align-self: flex-start;
+        background: #0e1726;
+        color: #dbeafe;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .meta {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-bottom: 6px;
+      }
+      footer {
+        padding: 10px 14px;
+        background: #071027;
+        border-top: 1px solid rgba(255, 255, 255, 0.03);
+        display: flex;
+        gap: 8px;
+        align-items: flex-end;
+        transition: background 0.5s ease;
+      }
+      input[type="text"] {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        background: #071427;
+        color: #e6eef8;
+        resize: none;
+        overflow: hidden;
+        min-height: 40px;
+        max-height: 150px;
+        transition: border-color 0.3s ease;
+      }
+      input[type="text"]:focus {
+        border-color: #06b6d4;
+        outline: none;
+      }
+      button {
+        padding: 8px 12px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        background: #06b6d4;
+        color: #042c33;
+        font-weight: 600;
+        transition: transform 0.2s ease, background 0.3s ease;
+      }
+      button:hover {
+        transform: scale(1.05);
+        background: #0891b2;
+      }
+      .small {
+        font-size: 13px;
+        padding: 6px 8px;
+      }
+      .image-thumb {
+        max-width: 240px;
+        border-radius: 8px;
+        display: block;
+        margin-top: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+      }
+      pre.code {
+        background: #041226;
+        padding: 10px;
+        border-radius: 8px;
+        overflow: auto;
+        max-width: 640px;
+        white-space: pre-wrap;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Roboto Mono",
+          monospace;
+        font-size: 13px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .top-controls {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .mode-select {
+        background: #071427;
+        color: #cde7f8;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        padding: 6px 8px;
+        border-radius: 8px;
+        transition: border-color 0.3s ease;
+      }
+      .mode-select:focus {
+        border-color: #06b6d4;
+      }
+      /* modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 6, 23, 0.6);
+        z-index: 40;
+      }
+      .modal {
+        width: 90%;
+        max-width: 760px;
+        background: #071224;
+        border-radius: 10px;
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        box-shadow: 0 10px 40px rgba(2, 6, 23, 0.8);
+        opacity: 0;
+        transform: scale(0.95);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .modal.visible {
+        opacity: 1;
+        transform: scale(1);
+      }
+      textarea {
+        width: 100%;
+        min-height: 200px;
+        background: #001022;
+        color: #dff5ff;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        font-family: ui-monospace, monospace;
+        transition: border-color 0.3s ease;
+      }
+      textarea:focus {
+        border-color: #06b6d4;
+      }
+      .fixed-small {
+        font-size: 12px;
+        opacity: 0.75;
+      }
+      /* Mode-specific backgrounds */
+      .mode-neutral #chat {
+        background: linear-gradient(180deg, #071029 0%, #061522 100%);
+      }
+      .mode-neutral .app {
+        background: #0b1220;
+      }
+      .mode-neutral header,
+      .mode-neutral footer {
+        background: #071027;
+      }
+      .mode-friend #chat {
+        background: linear-gradient(180deg, #3b0764 0%, #2a074a 100%);
+      } /* Warmer tones */
+      .mode-friend .app {
+        background: #22053a;
+      }
+      .mode-friend header,
+      .mode-friend footer {
+        background: #3b0764;
+      }
+      .mode-professional #chat {
+        background: linear-gradient(180deg, #052e16 0%, #052e16 100%);
+      } /* Formal green */
+      .mode-professional .app {
+        background: #052e16;
+      }
+      .mode-professional header,
+      .mode-professional footer {
+        background: #052e16;
+      }
+      .mode-funny #chat {
+        background: linear-gradient(180deg, #713f12 0%, #713f12 100%);
+      } /* Fun orange */
+      .mode-funny .app {
+        background: #713f12;
+      }
+      .mode-funny header,
+      .mode-funny footer {
+        background: #713f12;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app mode-neutral" role="main">
+      <header>
+        <h1>AI by sanu sharma</h1>
+        <div class="top-controls">
+          <select id="mode-selector" class="mode-select" title="Mode">
+            <option value="neutral">Neutral</option>
+            <option value="friend">Friend Mode</option>
+            <option value="professional">Professional</option>
+            <option value="funny">Funny</option>
+          </select>
+          <button id="open-canvas" class="small">Open Coding Canvas</button>
+          <label class="small fixed-small" title="Upload an image"
+            ><input
+              id="image-input"
+              type="file"
+              accept="image/*"
+              style="display: none"
+            />
+            📷 Upload</label
+          >
+        </div>
+      </header>
+
+      <div id="chat" aria-live="polite">
+        <div class="msg ai">
+          <div class="meta">System</div>
+          Welcome! Use
+          <code class="fixed-small">solve: &lt;problem&gt;</code> or
+          <code class="fixed-small">/solve &lt;problem&gt;</code> for
+          step-by-step math.
+        </div>
+      </div>
+
+      <footer>
+        <input
+          id="user-input"
+          type="text"
+          placeholder="Type message — prefix with solve: for step-by-step math"
+          autocomplete="off"
+        />
+        <button id="send">Send</button>
+      </footer>
+    </div>
+
+    <!-- Coding Canvas Modal -->
+    <div id="canvas-backdrop" class="modal-backdrop" aria-hidden="true">
+      <div
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Coding Canvas"
+      >
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+          "
+        >
+          <strong>Code Canvas</strong>
+          <div style="display: flex; gap: 8px">
+            <button id="send-code" class="small">Send to AI</button>
+            <button id="close-canvas" class="small">Close</button>
+          </div>
+        </div>
+        <textarea
+          id="code-area"
+          placeholder="// Paste code here — click 'Send to AI' to post it to chat for review/explanation."
+        ></textarea>
+        <div style="display: flex; gap: 8px; margin-top: 8px">
+          <button id="insert-sample" class="small">Insert Sample</button>
+          <button id="save-snippet" class="small">
+            Save Snippet (browser)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const chat = document.getElementById("chat");
+      const input = document.getElementById("user-input");
+      const sendBtn = document.getElementById("send");
+      const modeSelector = document.getElementById("mode-selector");
+      const app = document.querySelector(".app");
+      const header = document.querySelector("header");
+      const footer = document.querySelector("footer");
+
+      const imageInput = document.getElementById("image-input");
+      const openCanvas = document.getElementById("open-canvas");
+      const canvasBackdrop = document.getElementById("canvas-backdrop");
+      const closeCanvas = document.getElementById("close-canvas");
+      const sendCodeBtn = document.getElementById("send-code");
+      const codeArea = document.getElementById("code-area");
+      const insertSample = document.getElementById("insert-sample");
+      const saveSnippet = document.getElementById("save-snippet");
+      const modal = document.querySelector(".modal");
+
+      // helpers
+      function appendMessage(text, from = "ai", meta = "") {
+        const node = document.createElement("div");
+        node.className = "msg " + (from === "user" ? "user" : "ai");
+        if (meta) {
+          const m = document.createElement("div");
+          m.className = "meta";
+          m.textContent = meta;
+          node.appendChild(m);
+        }
+        // allow HTML for images/code
+        if (typeof text === "string") {
+          // safe simple rendering: allow <img> and <pre> inserted by our own code.
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = text;
+          node.appendChild(wrapper);
+        } else {
+          node.appendChild(text);
+        }
+        chat.appendChild(node);
+        chat.scrollTop = chat.scrollHeight;
+      }
+
+      function appendUser(text) {
+        appendMessage(escapeHtml(text), "user", "You");
+      }
+      function escapeHtml(s) {
+        return s.replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+        );
+      }
+
+      // send normal message (supports streaming)
+      async function sendMessage(rawMsg) {
+        if (!rawMsg || !rawMsg.trim()) return;
+        const mode = modeSelector.value || "neutral";
+
+        appendUser(rawMsg);
+
+        // show placeholder AI bubble
+        const aiBubble = document.createElement("div");
+        aiBubble.className = "msg ai";
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.textContent = "AI";
+        aiBubble.appendChild(meta);
+        const body = document.createElement("div");
+        body.textContent = "Thinking...";
+        aiBubble.appendChild(body);
+        chat.appendChild(aiBubble);
+        chat.scrollTop = chat.scrollHeight;
+
+        try {
+          const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: rawMsg, mode }),
+          });
+
+          if (!res.ok) {
+            body.textContent = `Error: HTTP ${res.status} ${res.statusText}`;
+            return;
+          }
+
+          // read stream
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let acc = "";
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            acc += decoder.decode(value, { stream: true });
+            const lines = acc.split("\n");
+            acc = lines.pop();
+            for (const line of lines) {
+              if (!line.trim()) continue;
+              try {
+                const obj = JSON.parse(line);
+                if (obj.reply !== undefined) {
+                  body.textContent =
+                    body.textContent === "Thinking..."
+                      ? obj.reply
+                      : body.textContent + obj.reply;
+                  chat.scrollTop = chat.scrollHeight;
+                }
+              } catch (e) {
+                // ignore parse errors
+                console.error("parse err", e);
+              }
+            }
+          }
+          // flush leftover
+          if (acc.trim()) {
+            try {
+              const obj = JSON.parse(acc);
+              if (obj.reply) body.textContent += obj.reply;
+            } catch (e) {}
+          }
+        } catch (err) {
+          body.textContent = "Error: " + err.message;
+          console.error(err);
+        }
+      }
+
+      // image upload
+      imageInput.addEventListener("change", async (ev) => {
+        const file = ev.target.files[0];
+        if (!file) return;
+        // preview on chat as user image
+        const reader = new FileReader();
+        reader.onload = () => {
+          appendMessage(
+            '<div class="meta">You (image)</div><img class="image-thumb" src="' +
+              reader.result +
+              '" alt="uploaded">',
+            "user"
+          );
+        };
+        reader.readAsDataURL(file);
+
+        // upload to backend
+        const fd = new FormData();
+        fd.append("image", file);
+        try {
+          const res = await fetch("/upload-image", {
+            method: "POST",
+            body: fd,
+          });
+          const data = await res.json();
+          if (res.ok && data.url) {
+            // show uploaded image URL and send a message to AI informing about it (simple)
+            const msgToAI = `User uploaded image: ${data.url}\nDescribe the image or answer questions the user asks about it.`;
+            // show the image as a normal AI-appended note that upload succeeded
+            appendMessage(
+              '<div class="meta">System</div>Image uploaded successfully: <a href="' +
+                data.url +
+                '" target="_blank" rel="noreferrer">Open</a>',
+              "ai"
+            );
+            // optional: send to AI for initial caption (you can comment this out if you don't want automatic send)
+            sendMessage(msgToAI);
+          } else {
+            appendMessage(
+              '<div class="meta">System</div>Image upload failed.',
+              "ai"
+            );
+          }
+        } catch (e) {
+          appendMessage(
+            '<div class="meta">System</div>Image upload error.',
+            "ai"
+          );
+        } finally {
+          imageInput.value = "";
+        }
+      });
+
+      // send on button / enter
+      sendBtn.addEventListener("click", () => {
+        const v = input.value.trim();
+        if (!v) return;
+        // special: if user wrote code block marker, show as code
+        sendMessage(v);
+        input.value = "";
+        input.style.height = "auto"; // reset height
+      });
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendBtn.click();
+        }
+      });
+      // auto-resize input
+      input.addEventListener("input", () => {
+        input.style.height = "auto";
+        input.style.height = input.scrollHeight + "px";
+      });
+
+      // Mode change: update backgrounds
+      modeSelector.addEventListener("change", (e) => {
+        const mode = e.target.value;
+        app.className = `app mode-${mode}`;
+      });
+
+      // Coding canvas open/close
+      openCanvas.addEventListener("click", () => {
+        canvasBackdrop.style.display = "flex";
+        canvasBackdrop.setAttribute("aria-hidden", "false");
+        modal.classList.add("visible");
+        codeArea.focus();
+      });
+      closeCanvas.addEventListener("click", () => {
+        canvasBackdrop.style.display = "none";
+        canvasBackdrop.setAttribute("aria-hidden", "true");
+        modal.classList.remove("visible");
+      });
+
+      // send code to chat
+      sendCodeBtn.addEventListener("click", () => {
+        const code = codeArea.value.trim();
+        if (!code) return alert("Paste some code first");
+        // show code in chat as user snippet
+        const codeHtml = `<div class="meta">You (code snippet)</div><pre class="code">${escapeHtml(
+          code
+        )}</pre>`;
+        appendMessage(codeHtml, "user");
+        // send to AI: prefix with CODE_SNIPPET for server to handle specially
+        sendMessage("CODE_SNIPPET:\n" + code);
+        canvasBackdrop.style.display = "none";
+        modal.classList.remove("visible");
+        codeArea.value = "";
+      });
+
+      // utils for sample and saving
+      insertSample.addEventListener("click", () => {
+        codeArea.value = `def factorial(n):\n    if n<=1: return 1\n    return n*factorial(n-1)\n\nprint(factorial(5))`;
+      });
+      saveSnippet.addEventListener("click", () => {
+        const blob = new Blob([codeArea.value || ""], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "snippet.txt";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      chat.scrollTop = chat.scrollHeight;
+    </script>
+  </body>
+</html>
