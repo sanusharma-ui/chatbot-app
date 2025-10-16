@@ -157,3 +157,4 @@ if __name__ == '__main__':
     print("Starting simplified AI Chatbot server on http://0.0.0.0:5000")
     print("Ensure Ollama is running on localhost:11434 and mistral:7b is pulled.")
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
+
